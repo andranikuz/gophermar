@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/andranikuz/gophermart/pkg/domain/order"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -13,7 +14,7 @@ import (
 type userOrdersResponse []orderItem
 
 type orderItem struct {
-	Number     int               `json:"number"`
+	Number     string            `json:"number"`
 	Status     order.OrderStatus `json:"status"`
 	Accrual    float64           `json:"accrual,omitempty"`
 	UploadedAt string            `json:"uploadedAt"`
@@ -37,7 +38,7 @@ func (h HTTPHandler) UserOrders(ctx context.Context, w http.ResponseWriter, r *h
 		response = append(
 			response,
 			orderItem{
-				Number:     o.Number,
+				Number:     strconv.Itoa(o.Number),
 				Status:     o.Status,
 				Accrual:    o.Accrual,
 				UploadedAt: o.CreatedAt.Format(time.RFC3339),
