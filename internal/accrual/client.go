@@ -42,8 +42,8 @@ func (c *AccrualClient) ProcessOrder(ctx context.Context, number int, userID *uu
 	urlString := fmt.Sprintf("%s/api/orders/%d", config.Config.AccrualSystemAddress, number)
 	request, err := http.NewRequest(http.MethodGet, urlString, nil)
 	if err != nil {
-		return
 		log.Error().Msg(err.Error())
+		return
 	}
 	request.Header.Set("Content-Type", "application/json")
 	resp, err := http.DefaultClient.Do(request)
@@ -70,7 +70,7 @@ func (c *AccrualClient) ProcessOrder(ctx context.Context, number int, userID *uu
 
 		if response.Status == "INVALID" || response.Status == "PROCESSED" {
 			id, _ := uuid.NewV6()
-			err = c.transactionService.NewTransaction(
+			_ = c.transactionService.NewTransaction(
 				ctx,
 				id,
 				number,

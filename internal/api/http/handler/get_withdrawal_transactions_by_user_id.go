@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -37,7 +38,7 @@ func (h HTTPHandler) WithdrawalTransactionsByUserID(ctx context.Context, w http.
 		response = append(
 			response,
 			withdrawalTransaction{
-				Order:       string(o.OrderNumber),
+				Order:       strconv.Itoa(o.OrderNumber),
 				Sum:         o.Amount,
 				ProcessedAt: o.CreatedAt.Format(time.RFC3339),
 			},

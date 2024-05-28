@@ -18,7 +18,7 @@ func (auth AuthenticationService) Login(ctx context.Context, login string, passw
 		log.Error().Msg(`auth: login: ` + err.Error())
 		return nil, err
 	}
-	if utils.CheckPasswordHash(password, u.Password) == false {
+	if !utils.CheckPasswordHash(password, u.Password) {
 		log.Info().Msg(ErrWrongCredentials.Error())
 		return nil, ErrWrongCredentials
 	}

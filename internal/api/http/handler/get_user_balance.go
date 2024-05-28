@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-type UserBalanceResponse struct {
+type userBalanceResponse struct {
 	Current   float64 `json:"current"`
 	Withdrawn float64 `json:"withdrawn"`
 }
@@ -21,7 +21,7 @@ func (h HTTPHandler) UserBalance(ctx context.Context, w http.ResponseWriter, r *
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	resp, err := json.Marshal(UserBalanceResponse{
+	resp, err := json.Marshal(userBalanceResponse{
 		Current:   balance.Current,
 		Withdrawn: balance.Withdrawn,
 	})
