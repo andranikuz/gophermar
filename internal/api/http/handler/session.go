@@ -42,10 +42,10 @@ func (h HTTPHandler) GetUserID(r *http.Request) (*uuid.UUID, error) {
 		return nil, ErrUserNotAuthed
 	}
 
-	userId, err := h.authenticationService.ParseToken(cookie.Value)
+	userID, err := h.authenticationService.ParseToken(cookie.Value)
 	if err != nil {
 		return nil, err
 	}
 
-	return userId, nil
+	return userID, nil
 }
