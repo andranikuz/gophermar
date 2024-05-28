@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	transaction2 "github.com/andranikuz/gophermart/pkg/domain/transaction"
 	"io"
 	"net/http"
 	"strconv"
@@ -46,7 +47,7 @@ func (h HTTPHandler) NewWithdrawTransaction(ctx context.Context, w http.Response
 	}
 	userID, _ := h.GetUserID(r)
 	id, _ := uuid.NewV6()
-	err = h.transactionService.NewTransaction(ctx, id, orderNum, userID, req.Sum)
+	err = h.transactionService.NewTransaction(ctx, id, orderNum, transaction2.TransactionTypeWithdrawal, userID, req.Sum)
 	if err != nil {
 		log.Error().Msg(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)

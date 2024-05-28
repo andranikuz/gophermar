@@ -14,6 +14,7 @@ func (s TransactionService) NewTransaction(
 	ctx context.Context,
 	id uuid.UUID,
 	orderNumber int,
+	transactionType transaction.TransactionType,
 	userID *uuid.UUID,
 	sum float64,
 ) error {
@@ -21,7 +22,7 @@ func (s TransactionService) NewTransaction(
 		ID:          id,
 		OrderNumber: orderNumber,
 		UserID:      userID,
-		Type:        transaction.TransactionTypeWithdrawal,
+		Type:        transactionType,
 		Amount:      sum,
 		CreatedAt:   time.Now(),
 	}

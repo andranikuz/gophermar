@@ -33,7 +33,7 @@ func (s TransactionService) UserBalance(ctx context.Context, userID *uuid.UUID) 
 	}
 
 	return &UserBalance{
-		Current:   wSum - aSum,
-		Withdrawn: aSum,
+		Current:   aSum - wSum,
+		Withdrawn: wSum,
 	}, nil
 }

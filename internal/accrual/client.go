@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	transaction2 "github.com/andranikuz/gophermart/pkg/domain/transaction"
 	"io"
 	"net/http"
 	"time"
@@ -74,6 +75,7 @@ func (c *AccrualClient) ProcessOrder(ctx context.Context, number int, userID *uu
 				ctx,
 				id,
 				number,
+				transaction2.TransactionTypeAccrual,
 				userID,
 				response.Accrual,
 			)
