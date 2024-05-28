@@ -15,8 +15,8 @@ import (
 )
 
 type loginRequest struct {
-	Login    string `json:"login" validate:"max=30,min=1"`
-	Password string `json:"password" validate:"max=30,min=1"`
+	Login    string `json:"login" validate:"max=50,min=1"`
+	Password string `json:"password" validate:"max=50,min=1"`
 }
 
 func (h HTTPHandler) LoginHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {

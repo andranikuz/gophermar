@@ -15,8 +15,8 @@ import (
 )
 
 type registerRequest struct {
-	Login    string `json:"login" validate:"max=30,min=1"`
-	Password string `json:"password" validate:"max=30,min=1"`
+	Login    string `json:"login" validate:"max=50,min=1"`
+	Password string `json:"password" validate:"max=50,min=1"`
 }
 
 func (h HTTPHandler) RegisterHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
