@@ -14,7 +14,7 @@ import (
 type withdrawalTransactionResponse []withdrawalTransaction
 
 type withdrawalTransaction struct {
-	Order       int     `json:"order"`
+	Order       string  `json:"order"`
 	Sum         float64 `json:"sum"`
 	ProcessedAt string  `json:"processed_at"`
 }
@@ -37,7 +37,7 @@ func (h HTTPHandler) WithdrawalTransactionsByUserID(ctx context.Context, w http.
 		response = append(
 			response,
 			withdrawalTransaction{
-				Order:       o.OrderNumber,
+				Order:       string(o.OrderNumber),
 				Sum:         o.Amount,
 				ProcessedAt: o.CreatedAt.Format(time.RFC3339),
 			},
