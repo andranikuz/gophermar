@@ -139,7 +139,7 @@ func (r OrderRepository) ListByStatuses(ctx context.Context, statuses []order.Or
 				FROM public.order
 				WHERE status in $1
 		`,
-		transaction.TransactionTypeAccrual,
+		transaction.TransactionTypeWithdrawal,
 		statuses,
 	)
 	if err != nil {
