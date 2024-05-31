@@ -48,6 +48,15 @@ func NewApplication() (*Application, error) {
 }
 
 func (a *Application) Run() error {
+	a.runWorker()
+	return a.runServer()
+}
+
+func (a Application) runServer() error {
 	httpHandler := handler.NewHTTPHandler(a.cnt)
 	return http.ListenAndServe(config.Config.ServerAddress, httpHandler.Router(a.ctx))
+}
+
+func (a Application) runWorker() {
+	go a.cnt.AccrualClient().Worker()
 }

@@ -1,8 +1,8 @@
 package accrual
 
 import (
-	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -17,15 +17,19 @@ import (
 	transactionDomain "github.com/andranikuz/gophermart/pkg/domain/transaction"
 )
 
-type AccrualResponse struct {
-	Order   string
-	Status  string
-	Accrual float64
-}
-
 type AccrualClient struct {
 	orderService       api.OrderServiceInterface
 	transactionService api.TransactionServiceInterface
+	ch                 chan api.OrderJob
+}
+
+var errTooManyRequests = errors.New("accrual: too many requests")
+var errNotFinalStatus = errors.New("accrual: not final status")
+
+type response struct {
+	Order   string
+	Status  string
+	Accrual float64
 }
 
 func NewAccrualClient(
@@ -35,52 +39,77 @@ func NewAccrualClient(
 	return &AccrualClient{
 		orderService:       orderService,
 		transactionService: transactionService,
+		ch:                 make(chan api.OrderJob, 100),
 	}
 }
 
-func (c *AccrualClient) ProcessOrder(ctx context.Context, number int, userID *uuid.UUID) {
-	urlString := fmt.Sprintf("%s/api/orders/%d", config.Config.AccrualSystemAddress, number)
+// Worker запускаем воркер
+func (c *AccrualClient) Worker() {
+	for {
+		job := <-c.ch
+		err := c.do(job)
+		if err != nil {
+			if errors.Is(err, errTooManyRequests) {
+				log.Info().Msg(err.Error())
+				time.Sleep(60 * time.Second)
+				c.ProcessOrder(job)
+			} else if errors.Is(err, errNotFinalStatus) {
+				log.Info().Msg(err.Error())
+				c.ProcessOrder(job)
+			} else {
+				log.Error().Msg(err.Error())
+				time.Sleep(10 * time.Second)
+				c.ProcessOrder(job)
+			}
+		}
+	}
+}
+
+// ProcessOrder помещаем заказ в очередь
+func (c AccrualClient) ProcessOrder(job api.OrderJob) {
+	c.ch <- job
+}
+
+// обрабатываем заказ из очереди
+func (c *AccrualClient) do(job api.OrderJob) error {
+	urlString := fmt.Sprintf("%s/api/orders/%d", config.Config.AccrualSystemAddress, job.Number)
 	request, err := http.NewRequest(http.MethodGet, urlString, nil)
 	if err != nil {
-		log.Error().Msg(err.Error())
-		return
+		return err
 	}
 	request.Header.Set("Content-Type", "application/json")
 	resp, err := http.DefaultClient.Do(request)
 	if err != nil {
-		log.Error().Msg(err.Error())
-		return
+		return err
 	}
 	defer resp.Body.Close()
-	log.Info().Msg(`process order`)
-	if resp.StatusCode == http.StatusOK {
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			log.Error().Msg(err.Error())
-		}
-		resp.Body.Close()
-		var response AccrualResponse
-		if err := json.Unmarshal(body, &response); err != nil {
-			log.Error().Msg(err.Error())
-		}
-		err = c.orderService.UpdateOrderStatus(ctx, number, order.OrderStatus(response.Status))
-		if err != nil {
-			log.Error().Msg(err.Error())
-		}
-
-		if response.Status == "INVALID" || response.Status == "PROCESSED" {
-			id, _ := uuid.NewV6()
-			_ = c.transactionService.NewTransaction(
-				ctx,
-				id,
-				number,
-				transactionDomain.TransactionTypeAccrual,
-				userID,
-				response.Accrual,
-			)
-		} else {
-			time.Sleep(1 * time.Second)
-			c.ProcessOrder(ctx, number, userID)
-		}
+	log.Info().Msg(`accrual: process order`)
+	if resp.StatusCode == http.StatusTooManyRequests {
+		return errTooManyRequests
 	}
+	if resp.StatusCode != http.StatusOK {
+		return err
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	var r response
+	if err = json.Unmarshal(body, &r); err != nil {
+		return err
+	}
+	err = c.orderService.UpdateOrderStatus(job.CTX, job.Number, order.OrderStatus(r.Status))
+	if r.Status != "INVALID" && r.Status != "PROCESSED" {
+		return errNotFinalStatus
+	}
+	id, _ := uuid.NewV6()
+	return c.transactionService.NewTransaction(
+		job.CTX,
+		id,
+		job.Number,
+		transactionDomain.TransactionTypeAccrual,
+		job.UserID,
+		r.Accrual,
+	)
 }

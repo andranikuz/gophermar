@@ -11,6 +11,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/theplant/luhn"
 
+	"github.com/andranikuz/gophermart/internal/api"
 	"github.com/andranikuz/gophermart/internal/services/order"
 )
 
@@ -51,11 +52,11 @@ func (h HTTPHandler) SetOrder(ctx context.Context, w http.ResponseWriter, r *htt
 		}
 	}
 
-	go h.accrualClient.ProcessOrder(
-		ctx,
-		orderNum,
-		userID,
-	)
+	h.accrualClient.ProcessOrder(api.OrderJob{
+		CTX:    ctx,
+		Number: orderNum,
+		UserID: userID,
+	})
 
 	w.WriteHeader(http.StatusAccepted)
 }
