@@ -100,6 +100,9 @@ func (c *AccrualClient) do(job api.OrderJob) error {
 		return err
 	}
 	err = c.orderService.UpdateOrderStatus(job.CTX, job.Number, order.OrderStatus(r.Status))
+	if err != nil {
+		return err
+	}
 	if r.Status != "INVALID" && r.Status != "PROCESSED" {
 		return errNotFinalStatus
 	}
