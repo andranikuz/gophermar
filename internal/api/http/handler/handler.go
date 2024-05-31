@@ -2,7 +2,7 @@ package handler
 
 import (
 	"context"
-	"github.com/andranikuz/gophermart/internal/accrual"
+	"github.com/andranikuz/gophermart/internal/api"
 
 	"net/http"
 
@@ -10,16 +10,13 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/andranikuz/gophermart/internal/container"
-	"github.com/andranikuz/gophermart/internal/services/auth"
-	"github.com/andranikuz/gophermart/internal/services/order"
-	"github.com/andranikuz/gophermart/internal/services/transaction"
 )
 
 type HTTPHandler struct {
-	authenticationService *auth.AuthenticationService
-	transactionService    *transaction.TransactionService
-	orderService          *order.OrderService
-	accrualClient         *accrual.AccrualClient
+	authenticationService api.AuthenticationServiceInterface
+	transactionService    api.TransactionServiceInterface
+	orderService          api.OrderServiceInterface
+	accrualClient         api.AccrualClientInterface
 }
 
 func NewHTTPHandler(cnt *container.Container) HTTPHandler {

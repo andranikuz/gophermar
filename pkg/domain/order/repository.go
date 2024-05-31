@@ -12,5 +12,4 @@ type Repository interface {
 	GetByNumber(ctx context.Context, number int) (*Order, error)
 	ListByUserID(ctx context.Context, userID *uuid.UUID) ([]*Order, error)
 	ListByStatuses(ctx context.Context, statuses []OrderStatus) ([]*Order, error)
-	CreateTable() error
 }

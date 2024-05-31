@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	transaction2 "github.com/andranikuz/gophermart/pkg/domain/transaction"
 	"io"
 	"net/http"
 	"time"
@@ -12,10 +11,10 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/rs/zerolog/log"
 
+	"github.com/andranikuz/gophermart/internal/api"
 	"github.com/andranikuz/gophermart/internal/config"
-	orderService "github.com/andranikuz/gophermart/internal/services/order"
-	"github.com/andranikuz/gophermart/internal/services/transaction"
 	"github.com/andranikuz/gophermart/pkg/domain/order"
+	transactionDomain "github.com/andranikuz/gophermart/pkg/domain/transaction"
 )
 
 type AccrualResponse struct {
@@ -25,13 +24,13 @@ type AccrualResponse struct {
 }
 
 type AccrualClient struct {
-	orderService       *orderService.OrderService
-	transactionService *transaction.TransactionService
+	orderService       api.OrderServiceInterface
+	transactionService api.TransactionServiceInterface
 }
 
 func NewAccrualClient(
-	orderService *orderService.OrderService,
-	transactionService *transaction.TransactionService,
+	orderService api.OrderServiceInterface,
+	transactionService api.TransactionServiceInterface,
 ) *AccrualClient {
 	return &AccrualClient{
 		orderService:       orderService,
@@ -75,7 +74,7 @@ func (c *AccrualClient) ProcessOrder(ctx context.Context, number int, userID *uu
 				ctx,
 				id,
 				number,
-				transaction2.TransactionTypeAccrual,
+				transactionDomain.TransactionTypeAccrual,
 				userID,
 				response.Accrual,
 			)

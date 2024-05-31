@@ -1,13 +1,8 @@
 package container
 
 import (
-	"database/sql"
 	"github.com/andranikuz/gophermart/internal/accrual"
-
-	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/rs/zerolog/log"
-
-	"github.com/andranikuz/gophermart/internal/config"
+	"github.com/andranikuz/gophermart/internal/api"
 	"github.com/andranikuz/gophermart/internal/services/auth"
 	service "github.com/andranikuz/gophermart/internal/services/order"
 	"github.com/andranikuz/gophermart/internal/services/transaction"
@@ -17,62 +12,52 @@ import (
 )
 
 type Container struct {
-	db *sql.DB
 	// repositories
 	userRepo        user.Repository
 	transactionRepo domain.Repository
 	orderRepo       order.Repository
 	//services
-	authenticationService *auth.AuthenticationService
-	transactionService    *transaction.TransactionService
-	orderService          *service.OrderService
+	authenticationService api.AuthenticationServiceInterface
+	transactionService    api.TransactionServiceInterface
+	orderService          api.OrderServiceInterface
 	// client
-	accrualClient *accrual.AccrualClient
+	accrualClient api.AccrualClientInterface
 }
 
-func NewContainer() *Container {
-	c := Container{}
-	c.UserRepository()
-	c.TransactionRepository()
-	c.OrderRepository()
-
-	return &c
-}
-
-func (c *Container) DB() *sql.DB {
-	if c.db == nil {
-		db, err := sql.Open("pgx", config.Config.DatabaseDSN)
-		if err != nil {
-			log.Fatal().Msg(err.Error())
-		}
-
-		return db
+func NewContainer(
+	userRepo user.Repository,
+	transactionRepo domain.Repository,
+	orderRepo order.Repository,
+) *Container {
+	return &Container{
+		userRepo:        userRepo,
+		transactionRepo: transactionRepo,
+		orderRepo:       orderRepo,
 	}
-	return c.db
 }
 
-func (c *Container) AuthenticationService() *auth.AuthenticationService {
+func (c *Container) AuthenticationService() api.AuthenticationServiceInterface {
 	if c.authenticationService == nil {
 		c.authenticationService = auth.NewAuthService(c.UserRepository())
 	}
 	return c.authenticationService
 }
 
-func (c *Container) TransactionService() *transaction.TransactionService {
+func (c *Container) TransactionService() api.TransactionServiceInterface {
 	if c.transactionService == nil {
 		c.transactionService = transaction.NewTransactionService(c.TransactionRepository())
 	}
 	return c.transactionService
 }
 
-func (c *Container) OrderService() *service.OrderService {
+func (c *Container) OrderService() api.OrderServiceInterface {
 	if c.orderService == nil {
 		c.orderService = service.NewOrderService(c.OrderRepository())
 	}
 	return c.orderService
 }
 
-func (c *Container) AccrualClient() *accrual.AccrualClient {
+func (c *Container) AccrualClient() api.AccrualClientInterface {
 	if c.accrualClient == nil {
 		c.accrualClient = accrual.NewAccrualClient(
 			c.OrderService(),

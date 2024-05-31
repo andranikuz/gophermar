@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	transaction2 "github.com/andranikuz/gophermart/pkg/domain/transaction"
 	"io"
 	"net/http"
 	"strconv"
@@ -12,6 +11,8 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/theplant/luhn"
 	"gopkg.in/go-playground/validator.v9"
+
+	transaction2 "github.com/andranikuz/gophermart/pkg/domain/transaction"
 )
 
 type newWithdrawTransactionRequest struct {

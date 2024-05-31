@@ -2,11 +2,15 @@ package application
 
 import (
 	"context"
+	"database/sql"
 	"net/http"
+
+	_ "github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/andranikuz/gophermart/internal/api/http/handler"
 	"github.com/andranikuz/gophermart/internal/config"
 	"github.com/andranikuz/gophermart/internal/container"
+	"github.com/andranikuz/gophermart/internal/postgres"
 )
 
 type Application struct {
@@ -16,13 +20,31 @@ type Application struct {
 
 func NewApplication() (*Application, error) {
 	config.Init()
-	cnt := container.NewContainer()
-	a := Application{
+	db, err := sql.Open("pgx", config.Config.DatabaseDSN)
+	if err != nil {
+		return nil, err
+	}
+	userRepo := postgres.NewUserRepository(db)
+	err = userRepo.CreateTable()
+	if err != nil {
+		return nil, err
+	}
+	transactionRepo := postgres.NewTransactionRepository(db)
+	err = transactionRepo.CreateTable()
+	if err != nil {
+		return nil, err
+	}
+	orderRepo := postgres.NewOrderRepositoryRepository(db)
+	err = orderRepo.CreateTable()
+	if err != nil {
+		return nil, err
+	}
+	cnt := container.NewContainer(userRepo, transactionRepo, orderRepo)
+
+	return &Application{
 		ctx: context.Background(),
 		cnt: cnt,
-	}
-
-	return &a, nil
+	}, nil
 }
 
 func (a *Application) Run() error {

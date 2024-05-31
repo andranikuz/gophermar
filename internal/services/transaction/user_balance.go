@@ -5,15 +5,11 @@ import (
 
 	"github.com/gofrs/uuid"
 
+	"github.com/andranikuz/gophermart/internal/api"
 	"github.com/andranikuz/gophermart/pkg/domain/transaction"
 )
 
-type UserBalance struct {
-	Current   float64
-	Withdrawn float64
-}
-
-func (s TransactionService) UserBalance(ctx context.Context, userID *uuid.UUID) (*UserBalance, error) {
+func (s TransactionService) UserBalance(ctx context.Context, userID *uuid.UUID) (*api.UserBalance, error) {
 	accruals, err := s.repo.UserTransactionsByType(ctx, userID, transaction.TransactionTypeAccrual)
 	if err != nil {
 		return nil, err
@@ -32,7 +28,7 @@ func (s TransactionService) UserBalance(ctx context.Context, userID *uuid.UUID) 
 		wSum += t.Amount
 	}
 
-	return &UserBalance{
+	return &api.UserBalance{
 		Current:   aSum - wSum,
 		Withdrawn: wSum,
 	}, nil
