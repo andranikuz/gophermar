@@ -19,7 +19,7 @@ func (h HTTPHandler) UserBalance(ctx context.Context, w http.ResponseWriter, r *
 	balance, err := h.transactionService.UserBalance(ctx, userID)
 	if err != nil {
 		log.Error().Msg(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	resp, err := json.Marshal(userBalanceResponse{

@@ -26,7 +26,7 @@ func (h HTTPHandler) authMiddleware(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		_, err := h.GetUserID(r)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusUnauthorized)
+			http.Error(w, ``, http.StatusUnauthorized)
 			return
 		}
 

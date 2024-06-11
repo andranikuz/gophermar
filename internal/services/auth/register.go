@@ -27,9 +27,9 @@ func (auth AuthenticationService) Register(ctx context.Context, id uuid.UUID, lo
 	}
 
 	u = &user.User{
-		ID:       id,
-		Login:    login,
-		Password: hash,
+		ID:           id,
+		Login:        login,
+		PasswordHash: hash,
 	}
 
 	err = auth.userRepo.Insert(ctx, u)

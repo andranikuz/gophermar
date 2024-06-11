@@ -26,7 +26,7 @@ func (h HTTPHandler) UserOrders(ctx context.Context, w http.ResponseWriter, r *h
 	orders, err := h.orderService.UserOrders(ctx, userID)
 	if err != nil {
 		log.Error().Msg(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	if len(orders) == 0 {

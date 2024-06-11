@@ -26,7 +26,7 @@ func (h HTTPHandler) WithdrawalTransactionsByUserID(ctx context.Context, w http.
 	orders, err := h.transactionService.UserTransactionsByType(ctx, userID, transaction.TransactionTypeWithdrawal)
 	if err != nil {
 		log.Error().Msg(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	if len(orders) == 0 {

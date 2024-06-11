@@ -9,11 +9,11 @@ import (
 func main() {
 	a, err := application.NewApplication()
 	if err != nil {
-		log.Error().Msg(err.Error())
+		log.Panic().Msg(err.Error())
 		panic(err)
 	}
 	if err := a.Run(); err != nil {
-		log.Error().Msg(err.Error())
+		log.Panic().Msg(err.Error())
 		panic(err)
 	}
 }

@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"io"
@@ -37,9 +36,6 @@ func (h HTTPHandler) LoginHandler(ctx context.Context, w http.ResponseWriter, r 
 	u, err := h.authenticationService.Login(ctx, req.Login, req.Password)
 	if err != nil {
 		if errors.Is(err, auth.ErrWrongCredentials) {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		} else if errors.Is(err, sql.ErrNoRows) {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		} else {
