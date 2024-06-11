@@ -2,10 +2,9 @@ package application
 
 import (
 	"context"
-	"database/sql"
 	"net/http"
 
-	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/andranikuz/gophermart/internal/api/http/handler"
 	"github.com/andranikuz/gophermart/internal/config"
@@ -20,29 +19,30 @@ type Application struct {
 
 func NewApplication() (*Application, error) {
 	config.Init()
-	db, err := sql.Open("pgx", config.Config.DatabaseDSN)
+	pool, err := pgxpool.New(context.Background(), config.Config.DatabaseDSN)
+	ctx := context.Background()
 	if err != nil {
 		return nil, err
 	}
-	userRepo := postgres.NewUserRepository(db)
-	err = userRepo.CreateTable()
+	userRepo := postgres.NewUserRepository(pool)
+	err = userRepo.CreateTable(ctx)
 	if err != nil {
 		return nil, err
 	}
-	transactionRepo := postgres.NewTransactionRepository(db)
-	err = transactionRepo.CreateTable()
+	transactionRepo := postgres.NewTransactionRepository(pool)
+	err = transactionRepo.CreateTable(ctx)
 	if err != nil {
 		return nil, err
 	}
-	orderRepo := postgres.NewOrderRepositoryRepository(db)
-	err = orderRepo.CreateTable()
+	orderRepo := postgres.NewOrderRepositoryRepository(pool)
+	err = orderRepo.CreateTable(ctx)
 	if err != nil {
 		return nil, err
 	}
 	cnt := container.NewContainer(userRepo, transactionRepo, orderRepo)
 
 	return &Application{
-		ctx: context.Background(),
+		ctx: ctx,
 		cnt: cnt,
 	}, nil
 }

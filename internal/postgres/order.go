@@ -2,25 +2,25 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/gofrs/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/andranikuz/gophermart/pkg/domain/order"
 	"github.com/andranikuz/gophermart/pkg/domain/transaction"
 )
 
 type OrderRepository struct {
-	db *sql.DB
+	pool *pgxpool.Pool
 }
 
-func NewOrderRepositoryRepository(db *sql.DB) *OrderRepository {
+func NewOrderRepositoryRepository(pool *pgxpool.Pool) *OrderRepository {
 	return &OrderRepository{
-		db: db,
+		pool: pool,
 	}
 }
 
-func (r OrderRepository) CreateTable() error {
+func (r OrderRepository) CreateTable(ctx context.Context) error {
 	query := `
 		CREATE TABLE IF NOT EXISTS "order" (
 			id UUID PRIMARY KEY,
@@ -29,7 +29,7 @@ func (r OrderRepository) CreateTable() error {
 			number BIGINT,
 			created_at TIMESTAMP
 		);`
-	_, err := r.db.Exec(query)
+	_, err := r.pool.Exec(ctx, query)
 
 	return err
 }
@@ -40,7 +40,7 @@ func (r OrderRepository) GetByNumber(ctx context.Context, number int) (*order.Or
 			FROM public.order 
 			WHERE number = $1 
 		`
-	err := r.db.QueryRowContext(ctx, query, number).Scan(
+	err := r.pool.QueryRow(ctx, query, number).Scan(
 		&o.ID,
 		&o.UserID,
 		&o.Number,
@@ -59,7 +59,7 @@ func (r OrderRepository) Insert(ctx context.Context, order *order.Order) error {
     		(id, user_id, number, status, created_at) 
 			VALUES ($1, $2, $3, $4, $5)`
 
-	if _, err := r.db.ExecContext(
+	if _, err := r.pool.Exec(
 		ctx,
 		query,
 		order.ID,
@@ -76,7 +76,7 @@ func (r OrderRepository) Insert(ctx context.Context, order *order.Order) error {
 
 func (r OrderRepository) ListByUserID(ctx context.Context, userID *uuid.UUID) ([]*order.Order, error) {
 	var orders []*order.Order
-	rows, err := r.db.QueryContext(
+	rows, err := r.pool.Query(
 		ctx,
 		`SELECT o.id, o.user_id, o.number, o.status, coalesce(SUM(t.amount), 0), o.created_at
 				FROM public.order o 
@@ -119,7 +119,7 @@ func (r OrderRepository) UpdateOrderStatus(ctx context.Context, number int, stat
 		WHERE number = $2
 		`
 
-	if _, err := r.db.ExecContext(
+	if _, err := r.pool.Exec(
 		ctx,
 		query,
 		status,
@@ -133,7 +133,7 @@ func (r OrderRepository) UpdateOrderStatus(ctx context.Context, number int, stat
 
 func (r OrderRepository) ListByStatuses(ctx context.Context, statuses []order.OrderStatus) ([]*order.Order, error) {
 	var orders []*order.Order
-	rows, err := r.db.QueryContext(
+	rows, err := r.pool.Query(
 		ctx,
 		`SELECT id, user_id, number, status, created_at
 				FROM public.order

@@ -2,24 +2,24 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/gofrs/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/andranikuz/gophermart/pkg/domain/transaction"
 )
 
 type TransactionRepository struct {
-	db *sql.DB
+	pool *pgxpool.Pool
 }
 
-func NewTransactionRepository(db *sql.DB) *TransactionRepository {
+func NewTransactionRepository(pool *pgxpool.Pool) *TransactionRepository {
 	return &TransactionRepository{
-		db: db,
+		pool: pool,
 	}
 }
 
-func (r TransactionRepository) CreateTable() error {
+func (r TransactionRepository) CreateTable(ctx context.Context) error {
 	query := `
 		CREATE TABLE IF NOT EXISTS "transaction" (
 			id UUID PRIMARY KEY,
@@ -29,7 +29,7 @@ func (r TransactionRepository) CreateTable() error {
 			amount float,
 			created_at TIMESTAMP
 		);`
-	_, err := r.db.Exec(query)
+	_, err := r.pool.Exec(ctx, query)
 
 	return err
 }
@@ -40,7 +40,7 @@ func (r TransactionRepository) GetByOrderNumber(ctx context.Context, orderNumber
 			FROM public.transaction 
 			WHERE order_number = $1 
 		`
-	err := r.db.QueryRowContext(ctx, query, orderNumber).Scan(
+	err := r.pool.QueryRow(ctx, query, orderNumber).Scan(
 		&t.ID,
 		&t.UserID,
 		&t.OrderNumber,
@@ -60,7 +60,7 @@ func (r TransactionRepository) Insert(ctx context.Context, transaction *transact
     		(id, user_id, order_number, type, amount, created_at) 
 			VALUES ($1, $2, $3, $4, $5, $6)`
 
-	if _, err := r.db.ExecContext(
+	if _, err := r.pool.Exec(
 		ctx,
 		query,
 		transaction.ID,
@@ -82,7 +82,7 @@ func (r TransactionRepository) UserTransactionsByType(
 	t transaction.TransactionType,
 ) ([]transaction.Transaction, error) {
 	var transactions []transaction.Transaction
-	rows, err := r.db.QueryContext(
+	rows, err := r.pool.Query(
 		ctx,
 		`SELECT id, user_id, order_number, type, amount, created_at
 				FROM public.transaction 

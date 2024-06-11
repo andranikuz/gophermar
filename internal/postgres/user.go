@@ -2,22 +2,23 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/andranikuz/gophermart/pkg/domain/user"
 )
 
 type UserRepository struct {
-	db *sql.DB
+	pool *pgxpool.Pool
 }
 
-func NewUserRepository(db *sql.DB) *UserRepository {
+func NewUserRepository(pool *pgxpool.Pool) *UserRepository {
 	return &UserRepository{
-		db: db,
+		pool: pool,
 	}
 }
 
-func (r UserRepository) CreateTable() error {
+func (r UserRepository) CreateTable(ctx context.Context) error {
 	query := `
 		CREATE TABLE IF NOT EXISTS public."user" (
 		   id uuid NOT NULL,
@@ -26,7 +27,7 @@ func (r UserRepository) CreateTable() error {
 		);
 		CREATE UNIQUE INDEX IF NOT EXISTS user_login_idx ON public."user" USING btree (login)
 	;`
-	_, err := r.db.Exec(query)
+	_, err := r.pool.Exec(ctx, query)
 
 	return err
 }
@@ -36,7 +37,7 @@ func (r UserRepository) Get(ctx context.Context, login string) (*user.User, erro
 
 	query := `SELECT id, login, password_hash FROM public.user WHERE login = $1`
 
-	err := r.db.QueryRowContext(ctx, query, login).Scan(&c.ID, &c.Login, &c.PasswordHash)
+	err := r.pool.QueryRow(ctx, query, login).Scan(&c.ID, &c.Login, &c.PasswordHash)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +48,7 @@ func (r UserRepository) Get(ctx context.Context, login string) (*user.User, erro
 func (r UserRepository) Insert(ctx context.Context, user *user.User) error {
 	query := `INSERT INTO public.user (id, login, password_hash) VALUES ($1, $2, $3)`
 
-	if _, err := r.db.ExecContext(ctx, query, user.ID, user.Login, user.PasswordHash); err != nil {
+	if _, err := r.pool.Exec(ctx, query, user.ID, user.Login, user.PasswordHash); err != nil {
 		return err
 	}
 
