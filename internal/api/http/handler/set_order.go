@@ -35,7 +35,7 @@ func (h HTTPHandler) SetOrder(ctx context.Context, w http.ResponseWriter, r *htt
 	userID, _ := h.GetUserID(r)
 	id, _ := uuid.NewV6()
 	setOrderErr := h.orderService.SetOrder(ctx, id, orderNum, userID)
-	if err != nil {
+	if setOrderErr != nil {
 		if errors.Is(setOrderErr, order.ErrAccrualTransactionCreatedByAnotherUser) {
 			log.Info().Msg(setOrderErr.Error())
 			w.WriteHeader(http.StatusConflict)
@@ -45,7 +45,7 @@ func (h HTTPHandler) SetOrder(ctx context.Context, w http.ResponseWriter, r *htt
 			w.WriteHeader(http.StatusOK)
 			return
 		} else {
-			logErrorIfExists(err)
+			logErrorIfExists(setOrderErr)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}

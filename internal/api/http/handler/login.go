@@ -29,12 +29,12 @@ func (h HTTPHandler) LoginHandler(ctx context.Context, w http.ResponseWriter, r 
 	// check validation
 	validationErr := validator.New().Struct(req)
 	if validationErr != nil {
-		log.Info().Msg(err.Error())
+		log.Info().Msg(validationErr.Error())
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	u, loginErr := h.authenticationService.Login(ctx, req.Login, req.Password)
-	if err != nil {
+	if loginErr != nil {
 		if errors.Is(loginErr, auth.ErrWrongCredentials) {
 			log.Info().Msg(err.Error())
 			w.WriteHeader(http.StatusUnauthorized)
