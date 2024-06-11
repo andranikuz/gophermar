@@ -22,22 +22,22 @@ type newWithdrawTransactionRequest struct {
 
 func (h HTTPHandler) NewWithdrawTransaction(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	var req newWithdrawTransactionRequest
-	body, _ := io.ReadAll(r.Body)
-	if err := json.Unmarshal(body, &req); err != nil {
-		log.Info().Msg(err.Error())
+	body, err := io.ReadAll(r.Body)
+	defer logErrorIfExists(err)
+	if err = json.Unmarshal(body, &req); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	// check validation
-	err := validator.New().Struct(req)
-	if err != nil {
-		log.Info().Msg(err.Error())
+	validationErr := validator.New().Struct(req)
+	if validationErr != nil {
+		log.Info().Msg(validationErr.Error())
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	orderNum, err := strconv.Atoi(req.Order)
-	if err != nil {
-		log.Info().Msg(err.Error())
+	orderNum, validationErr := strconv.Atoi(req.Order)
+	if validationErr != nil {
+		log.Info().Msg(validationErr.Error())
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -50,7 +50,6 @@ func (h HTTPHandler) NewWithdrawTransaction(ctx context.Context, w http.Response
 	id, _ := uuid.NewV6()
 	err = h.transactionService.NewTransaction(ctx, id, orderNum, transaction2.TransactionTypeWithdrawal, userID, req.Sum)
 	if err != nil {
-		log.Error().Msg(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

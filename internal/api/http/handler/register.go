@@ -21,33 +21,35 @@ type registerRequest struct {
 
 func (h HTTPHandler) RegisterHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	var req registerRequest
-	body, _ := io.ReadAll(r.Body)
-	if err := json.Unmarshal(body, &req); err != nil {
-		log.Info().Msg(err.Error())
+	body, err := io.ReadAll(r.Body)
+	defer logErrorIfExists(err)
+	if validationErr := json.Unmarshal(body, &req); err != nil {
+		log.Info().Msg(validationErr.Error())
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	// check validation
-	err := validator.New().Struct(req)
-	if err != nil {
-		log.Info().Msg(err.Error())
+	validationErr := validator.New().Struct(req)
+	if validationErr != nil {
+		log.Info().Msg(validationErr.Error())
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	userID, _ := uuid.NewV6()
 	// handle request
-	err = h.authenticationService.Register(ctx, userID, req.Login, req.Password)
-	if err != nil {
-		if errors.Is(err, auth.ErrUserExists) {
+	registerErr := h.authenticationService.Register(ctx, userID, req.Login, req.Password)
+	if registerErr != nil {
+		if errors.Is(registerErr, auth.ErrUserExists) {
+			log.Info().Msg(registerErr.Error())
 			w.WriteHeader(http.StatusConflict)
 			return
 		}
+		logErrorIfExists(registerErr)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	if err = h.SetSession(userID, w); err != nil {
-		log.Error().Msg(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

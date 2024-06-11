@@ -7,8 +7,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/rs/zerolog/log"
-
 	"github.com/andranikuz/gophermart/pkg/domain/transaction"
 )
 
@@ -24,8 +22,8 @@ func (h HTTPHandler) WithdrawalTransactionsByUserID(ctx context.Context, w http.
 	w.Header().Set("Content-Type", "application/json")
 	userID, _ := h.GetUserID(r)
 	orders, err := h.transactionService.UserTransactionsByType(ctx, userID, transaction.TransactionTypeWithdrawal)
+	defer logErrorIfExists(err)
 	if err != nil {
-		log.Error().Msg(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -46,12 +44,10 @@ func (h HTTPHandler) WithdrawalTransactionsByUserID(ctx context.Context, w http.
 	}
 	resp, err := json.Marshal(response)
 	if err != nil {
-		log.Error().Msg(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	if _, err := w.Write(resp); err != nil {
-		log.Error().Msg(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 }

@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"strconv"
 	"time"
-
-	"github.com/rs/zerolog/log"
 )
 
 type userOrdersResponse []orderItem
@@ -24,8 +22,8 @@ func (h HTTPHandler) UserOrders(ctx context.Context, w http.ResponseWriter, r *h
 	w.Header().Set("Content-Type", "application/json")
 	userID, _ := h.GetUserID(r)
 	orders, err := h.orderService.UserOrders(ctx, userID)
+	defer logErrorIfExists(err)
 	if err != nil {
-		log.Error().Msg(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -47,12 +45,10 @@ func (h HTTPHandler) UserOrders(ctx context.Context, w http.ResponseWriter, r *h
 	}
 	resp, err := json.Marshal(response)
 	if err != nil {
-		log.Error().Msg(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	if _, err := w.Write(resp); err != nil {
-		log.Error().Msg(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 }

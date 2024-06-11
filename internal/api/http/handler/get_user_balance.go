@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-
-	"github.com/rs/zerolog/log"
 )
 
 type userBalanceResponse struct {
@@ -17,8 +15,8 @@ func (h HTTPHandler) UserBalance(ctx context.Context, w http.ResponseWriter, r *
 	w.Header().Set("Content-Type", "application/json")
 	userID, _ := h.GetUserID(r)
 	balance, err := h.transactionService.UserBalance(ctx, userID)
+	defer logErrorIfExists(err)
 	if err != nil {
-		log.Error().Msg(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -27,12 +25,10 @@ func (h HTTPHandler) UserBalance(ctx context.Context, w http.ResponseWriter, r *
 		Withdrawn: balance.Withdrawn,
 	})
 	if err != nil {
-		log.Error().Msg(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	if _, err := w.Write(resp); err != nil {
-		log.Error().Msg(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 }

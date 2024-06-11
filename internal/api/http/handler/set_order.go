@@ -17,14 +17,13 @@ import (
 
 func (h HTTPHandler) SetOrder(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
+	defer logErrorIfExists(err)
 	if err != nil {
-		log.Info().Msg(err.Error())
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	orderNum, err := strconv.Atoi(string(body))
 	if err != nil {
-		log.Info().Msg(err.Error())
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -35,18 +34,18 @@ func (h HTTPHandler) SetOrder(ctx context.Context, w http.ResponseWriter, r *htt
 	}
 	userID, _ := h.GetUserID(r)
 	id, _ := uuid.NewV6()
-	err = h.orderService.SetOrder(ctx, id, orderNum, userID)
+	setOrderErr := h.orderService.SetOrder(ctx, id, orderNum, userID)
 	if err != nil {
-		if errors.Is(err, order.ErrAccrualTransactionCreatedByAnotherUser) {
-			log.Info().Msg(err.Error())
+		if errors.Is(setOrderErr, order.ErrAccrualTransactionCreatedByAnotherUser) {
+			log.Info().Msg(setOrderErr.Error())
 			w.WriteHeader(http.StatusConflict)
 			return
-		} else if errors.Is(err, order.ErrAccrualTransactionCreatedBySameUser) {
-			log.Info().Msg(err.Error())
+		} else if errors.Is(setOrderErr, order.ErrAccrualTransactionCreatedBySameUser) {
+			log.Info().Msg(setOrderErr.Error())
 			w.WriteHeader(http.StatusOK)
 			return
 		} else {
-			log.Error().Msg(err.Error())
+			logErrorIfExists(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
